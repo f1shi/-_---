@@ -5,11 +5,16 @@ import sqlite3
 TOKEN = '7008247183:AAEbZGJLz5uTTJlNefsFDBU5uXTmeiGgJkE'
 bot = telebot.TeleBot(TOKEN)
 
-numberUniv = 0
+numberUniv = None
 
 @bot.message_handler(commands=['start'])
 def start(message):
-
+    conn = sqlite3.connect('StudentSearcher.sql')
+    cur = conn.cursor()
+    cur.execute('CREATE TABLE IF NOT EXISTS users (id int auto_increment primary key, univ varchar(1), username varchar(50))')
+    conn.commit()
+    cur.close()
+    conn.close()
 
     markup = types.InlineKeyboardMarkup()
     btn1 = types.InlineKeyboardButton("МГУ", callback_data='mgu')
@@ -23,7 +28,7 @@ def start(message):
 
 @bot.callback_query_handler(func=lambda callback: True)
 def callback_univ(callback):
-
+    global numberUniv
     markup2 = types.InlineKeyboardMarkup()
     btnSt = types.InlineKeyboardButton("Студент", callback_data='st')
     btnSc = types.InlineKeyboardButton("Школьник", callback_data='sc')
@@ -38,13 +43,43 @@ def callback_univ(callback):
     elif callback.data == 'mfti':
         numberUniv = 3
         bot.send_message(callback.message.chat.id, 'Кем вы являетесь?', reply_markup=markup2)
-    else:
+    elif callback.data == 'mifi':
         numberUniv = 4
         bot.send_message(callback.message.chat.id, 'Кем вы являетесь?', reply_markup=markup2)
 
     if callback.data == 'st':
-        bot.send_message(callback.message.chat.id, 'введите свой ник в тг')
+        bot.send_message(callback.message.chat.id, 'введите свой ник в тг в формате @username')
+        bot.register_next_step_handler(callback.message, register)
     elif callback.data == 'sc':
-        bot.send_message(callback.message.chat.id, 'контакты студентов:')
+        bot.send_message(callback.message.chat.id, 'контакты студентов:\n')
+        bot.register_next_step_handler(callback.message, callbackInfo)
+
+def register(message):
+    username = message.text.strip()
+
+    conn = sqlite3.connect('StudentSearcher.sql')
+    cur = conn.cursor()
+    cur.execute("INSERT INTO users (univ, username) VALUES ('%s', '%s')" % (numberUniv, username))
+    conn.commit()
+    cur.close()
+    conn.close()
+    bot.send_message(message.chat.id, "Спасибо, что оставили данные")
+
+def callbackInfo(message):
+    conn = sqlite3.connect('StudentSearcher.sql')
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM users')
+    users = cur.fetchall()
+
+    info = ''
+
+    for el in users:
+        if el[1] == numberUniv:
+            info += f'{el[2]}\n'
+
+    cur.close()
+    conn.close()
+
+    bot.send_message(message.chat.id, info)
 
 bot.polling(none_stop=True, interval=0)
