@@ -26,7 +26,7 @@ def callback_univ(callback):
 
     markup2 = types.InlineKeyboardMarkup()
     btnSt = types.InlineKeyboardButton("Студент", callback_data='st')
-    btnSc = types.InlineKeyboardButton("Школьник", callback_data='Sc')
+    btnSc = types.InlineKeyboardButton("Школьник", callback_data='sc')
     markup2.row(btnSt, btnSc)
 
     if callback.data == 'mgu':
