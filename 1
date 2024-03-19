@@ -1,0 +1,57 @@
+import telebot
+from telebot import types
+import sqlite3
+
+TOKEN = '7008247183:AAEbZGJLz5uTTJlNefsFDBU5uXTmeiGgJkE'
+bot = telebot.TeleBot(TOKEN)
+
+numberUniv = 0
+
+@bot.message_handler(commands=['start'])
+def start(message):
+
+
+    markup = types.InlineKeyboardMarkup()
+    btn1 = types.InlineKeyboardButton("МГУ", callback_data='mgu')
+    btn2 = types.InlineKeyboardButton("ИТМО", callback_data='itmo')
+    markup.row(btn1, btn2)
+    btn3 = types.InlineKeyboardButton("МФТИ", callback_data='mfti')
+    btn4 = types.InlineKeyboardButton("МИФИ", callback_data='mifi')
+    markup.row(btn3, btn4)
+    bot.send_message(message.chat.id, "Добро пожаловать в StudentSearcher! \nВыбери интересующий тебе вуз", reply_markup=markup)
+
+
+@bot.callback_query_handler(func=lambda callback: True)
+def callback_univ(callback):
+    if callback.data == 'mgu':
+        numberUniv = 1
+    elif callback.data == 'itmo':
+        numberUniv = 2
+    elif callback.data == 'mfti':
+        numberUniv = 3
+    else:
+        numberUniv = 4
+    bot.register_next_step_handler(message, who)
+
+def who(message):
+    markup2 = types.InlineKeyboardMarkup()
+    btnSt = types.InlineKeyboardButton("Студент", callback_data='st')
+    btnSc = types.InlineKeyboardButton("Школьник", callback_data='Sc')
+    markup2.row(btnSt, btnSc)
+    bot.send_message(message.chat.id, 'Кем вы являетесь?', reply_markup=markup2)
+
+    bot.register_next_step_handler(message, callback_who)
+
+def callback_who(callback):
+    if callback.data == 'st':
+        bot.send_message(message.chat.id, 'введите свой ник в тг')
+    else:
+        bot.send_message(message.chat.id, 'контакты студентов:')
+
+
+
+
+
+
+
+bot.polling(none_stop=True, interval=0)
